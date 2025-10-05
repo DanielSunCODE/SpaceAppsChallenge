@@ -1,0 +1,12 @@
+2025-10-05 11:22:44 -> Valor: 528 | Estado: Bueno
+2025-10-05 11:22:45 -> Valor: 523 | Estado: Bueno
+2025-10-05 11:22:46 -> Valor: 528 | Estado: Bueno
+2025-10-05 11:22:47 -> Valor: 525 | Estado: Bueno
+2025-10-05 11:22:48 -> Valor: 523 | Estado: Bueno
+2025-10-05 11:22:49 -> Valor: 526 | Estado: Bueno
+2025-10-05 11:22:50 -> Valor: 525 | Estado: Bueno
+2025-10-05 11:22:51 -> Valor: 523 | Estado: Bueno
+2025-10-05 11:22:58 -> Valor: 519 | Estado: Bueno
+2025-10-05 11:22:58 -> Valor: 516 | Estado: Bueno
+2025-10-05 11:22:59 -> Valor: 516 | Estado: Bueno
+2025-10-05 11:23:01 -> Valor: 518 | Estado: Bueno
