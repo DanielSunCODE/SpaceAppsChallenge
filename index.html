@@ -383,5 +383,48 @@
       Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
     });
   </script>
+  <script>
+  // --- Cargar el mapa base ---
+map.setView([25.438, -100.979], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(map);
+
+  // --- Cargar la data generada ---
+  fetch("public/data/air_quality_data.json")
+    .then((response) => response.json())
+    .then((data) => {
+      data.forEach((zone) => {
+        const aqi = zone.AQI_Global || 0;
+        let color = "gray";
+        if (aqi >= 70) color = "red";
+        else if (aqi >= 40) color = "yellow";
+        else color = "green";
+
+        // --- Dibujar punto o zona ---
+        const marker = L.circleMarker([zone.latitude, zone.longitude], {
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.6,
+          radius: 10,
+        }).addTo(map);
+
+        // --- Popup con detalles ---
+        marker.bindPopup(`
+          <b>${zone.zone}</b><br>
+          🌫️ AQI Global: ${aqi.toFixed(1)}% (${color.toUpperCase()})<br>
+          <hr>
+          <b>NO₂:</b> ${zone.no2_value}<br>
+          <b>O₃:</b> ${zone.o3_value}<br>
+          <b>HCHO:</b> ${zone.hcho_value}<br>
+          <b>SO₂:</b> ${zone.so2_value}<br>
+          <b>CO:</b> ${zone.co_value}
+        `);
+      });
+    })
+    .catch((err) => console.error("Error cargando los datos de calidad del aire:", err));
+</script>
+
 </body>
 </html>
