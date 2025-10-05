@@ -117,7 +117,7 @@
     .air-box .aqi-text {color:var(--muted);font-size:14px;margin-top:4px;margin-bottom:16px;}
     .aqi-bar {position: relative;height:10px;border-radius:6px;overflow:hidden;}
     .gradient-bar {width:100%;height:100%;background:linear-gradient(to right, var(--bad), var(--regular), var(--good));border-radius:6px;}
-    .indicator {position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--bg);transform:translateX(-50%);}
+    .indicator {position:absolute;top:-2px;width:14px;height:13px;border-radius:50%;background:#fff;border:2px solid var(--bg);transform:translateX(-50%);}
 
     @keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
 
@@ -208,323 +208,331 @@
 
   <!-- Script principal -->
   <script>
-    // ===== Estado =====
-    let rows = [];
-    let map, heat, markers = [];
-    const usersDB = [{ email: "test@tempoair.com", password: "1234", name: "Daniel Sun" }];
+  // ===== Estado =====
+  let rows = [];
+  let map, heat, markers = [];
+  const usersDB = [{ email: "test@gmail.com", password: "1234", name: "test" }];
 
-    // ===== Utilidades =====
-    function classifyScore(score){
-      if(score < 35) return {label:'Good', color:'var(--good)', icon:'bi-heart-fill'};
-      if(score > 65) return {label:'Bad', color:'var(--bad)', icon:'bi-exclamation-triangle-fill'};
-      return {label:'Regular', color:'var(--regular)', icon:'bi-shield-check'};
-    }
-    function fmt(n,d=2){return (n==null||isNaN(n))?'—':Number(n).toFixed(d)}
-    function scoreFrom(r){
-      const z = ((r.no2/100)*25 + (Math.max(0,r.o3)/120)*20 + (r.hcho/0.002)*15 + (r.so2/0.002)*15 + (r.co/2.0)*25)*100;
-      return Math.max(0, Math.min(100, z));
-    }
-    function normalizeRow(row){
-      const time = new Date(row.datetime || row.date_time || row.fecha || row.time);
-      const lat = parseFloat(row.latitude ?? row.lat);
-      const lon = parseFloat(row.longitude ?? row.lon ?? row.lng);
-      const no2 = parseFloat(row.no2_value ?? row.no2);
-      const o3  = parseFloat(row.o3_value ?? row.o3);
-      const hcho= parseFloat(row.hcho_value ?? row.hcho);
-      const so2 = parseFloat(row.so2_value ?? row.so2);
-      const co  = parseFloat(row.co_value ?? row.co);
-      return {time, lat, lon, no2, o3, hcho, so2, co};
-    }
+  // ===== Utilidades =====
+  function classifyScore(score){
+    if(score < 41) return {label:'Bad', color:'var(--bad)', icon:'bi-exclamation-triangle-fill'};
+    if(score > 60) return {label:'Good', color:'var(--good)', icon:'bi-heart-fill'};
+    return {label:'Regular', color:'var(--regular)', icon:'bi-shield-check'};
+  }
+  function fmt(n,d=2){return (n==null||isNaN(n))?'—':Number(n).toFixed(d)}
+  function scoreFrom(r){
+    const z = ((r.no2/100)*25 + (Math.max(0,r.o3)/120)*20 + (r.hcho/0.002)*15 + (r.so2/0.002)*15 + (r.co/2.0)*25)*100;
+    return Math.max(0, Math.min(100, z));
+  }
+  function normalizeRow(row){
+    const time = new Date(row.datetime || row.date_time || row.fecha || row.time);
+    const lat = parseFloat(row.latitude ?? row.lat);
+    const lon = parseFloat(row.longitude ?? row.lon ?? row.lng);
+    const no2 = parseFloat(row.no2_value ?? row.no2);
+    const o3  = parseFloat(row.o3_value ?? row.o3);
+    const hcho= parseFloat(row.hcho_value ?? row.hcho);
+    const so2 = parseFloat(row.so2_value ?? row.so2);
+    const co  = parseFloat(row.co_value ?? row.co);
+    return {time, lat, lon, no2, o3, hcho, so2, co};
+  }
 
-    // === Alertas dinámicas desde <span id="aqiValue">
-    function actualizarAlertasDesdeAQI() {
-      const aqiValueEl = document.getElementById("aqiValue");
-      const statusEl   = document.getElementById("aqiStatus");
-      const indicatorEl= document.getElementById("aqiIndicator");
-      const alertBox   = document.querySelector(".alert-panel");
-      const alertContainer = document.getElementById("alerts");
-      if (!aqiValueEl || !statusEl || !indicatorEl || !alertBox || !alertContainer) return;
+  // === Alertas dinámicas desde <span id="aqiValue">
+  function actualizarAlertasDesdeAQI() {
+    const aqiValueEl = document.getElementById("aqiValue");
+    const statusEl   = document.getElementById("aqiStatus");
+    const indicatorEl= document.getElementById("aqiIndicator");
+    const alertBox   = document.querySelector(".alert-panel");
+    const alertContainer = document.getElementById("alerts");
+    if (!aqiValueEl || !statusEl || !indicatorEl || !alertBox || !alertContainer) return;
 
-      const raw = parseFloat(aqiValueEl.textContent.trim());
-      const aqi = isNaN(raw) ? 0 : Math.max(0, Math.min(100, raw)); // clamp 0–100
+    const raw = parseFloat(aqiValueEl.textContent.trim());
+    const aqi = isNaN(raw) ? 0 : Math.max(0, Math.min(100, raw));
 
-      let message = "", description = "", bgColor = "", color = "", icon = "";
-      if (aqi < 41) {
-        message = "Mala calidad del aire";
-        description = "⚠️ Pollution levels are high. It’s recommended to stay indoors.";
-        bgColor = "linear-gradient(180deg, rgba(231,76,60,.15), rgba(231,76,60,.05))";
-        color = "var(--bad)"; icon = "bi-emoji-frown"; statusEl.textContent = "POOR";
-      } else if (aqi <= 60) {
-        message = "Calidad del aire regular";
-        description = "There are some pollutants present. Avoid intense outdoor activities.";
-        bgColor = "linear-gradient(180deg, rgba(241,196,15,.15), rgba(241,196,15,.05))";
-        color = "var(--regular)"; icon = "bi-emoji-neutral"; statusEl.textContent = "MODERATE";
-      } else {
-        message = "The air is clean today";
-        description = "Breathe easy 🌿, pollution levels are within a healthy range.";
-        bgColor = "linear-gradient(180deg, rgba(46,204,113,.15), rgba(46,204,113,.05))";
-        color = "var(--good)"; icon = "bi-emoji-smile"; statusEl.textContent = "GOOD";
-      }
-
-      // UI
-      statusEl.style.color = color;
-      alertBox.style.background = bgColor;
-      indicatorEl.style.left = aqi + "%";
-      alertContainer.innerHTML = `
-        <h3 style="display:flex;align-items:center;gap:8px;">
-          <i class="bi ${icon}" style="font-size:20px;color:${color};"></i> ${message}
-        </h3>
-        <p style="color:#cfe3ff;">${description}</p>
-        <p style="font-size:13px;color:var(--muted)">Índice AQI actual: ${aqi}</p>
-      `;
+    let message = "", description = "", bgColor = "", color = "", icon = "";
+    if (aqi < 41) {
+      message = "Poor air quality";
+      description = "⚠️ Pollution levels are high. It’s recommended to stay indoors.";
+      bgColor = "linear-gradient(180deg, rgba(231,76,60,.15), rgba(231,76,60,.05))";
+      color = "var(--bad)"; icon = "bi-emoji-frown"; statusEl.textContent = "POOR";
+    } else if (aqi <= 60) {
+      message = "Moderate air quality";
+      description = "There are some pollutants present. Avoid intense outdoor activities.";
+      bgColor = "linear-gradient(180deg, rgba(241,196,15,.15), rgba(241,196,15,.05))";
+      color = "var(--regular)"; icon = "bi-emoji-neutral"; statusEl.textContent = "MODERATE";
+    } else {
+      message = "Good air quality";
+      description = "Breathe easy 🌿, pollution levels are within a healthy range.";
+      bgColor = "linear-gradient(180deg, rgba(46,204,113,.15), rgba(46,204,113,.05))";
+      color = "var(--good)"; icon = "bi-emoji-smile"; statusEl.textContent = "GOOD";
     }
 
-    // Observa cambios en el número del AQI para actualizar automáticamente
-    const observer = new MutationObserver(actualizarAlertasDesdeAQI);
-    window.addEventListener("DOMContentLoaded", () => {
-      const aqiNode = document.getElementById("aqiValue");
-      if (aqiNode) {
-        observer.observe(aqiNode, { childList: true, characterData: true, subtree: true });
-      }
-      actualizarAlertasDesdeAQI();
-    });
+    statusEl.style.color = color;
+    alertBox.style.background = bgColor;
+    indicatorEl.style.left = aqi + "%";
+    alertContainer.innerHTML = `
+      <h3 style="display:flex;align-items:center;gap:8px;">
+        <i class="bi ${icon}" style="font-size:20px;color:${color};"></i> ${message}
+      </h3>
+      <p style="color:#cfe3ff;">${description}</p>
+      <p style="font-size:13px;color:var(--muted)">Current AQI index: ${aqi}</p>
+    `;
+  }
 
-    // === Pronóstico de chips (demo)
-    function renderHourStrip(predicciones = []){
-      const cont = document.getElementById('hourChips');
-      cont.innerHTML = '';
-      const now = new Date();
-      for(let i=0; i<10; i++){
-        const hour = new Date(now.getTime() + i*60*60*1000);
-        const label = i===0 ? 'Now' : `${hour.getHours().toString().padStart(2,'0')}:00`;
-        const score = predicciones[i] ?? Math.floor(40 + Math.random()*60);
-        const {label:state, color, icon} = classifyScore(score);
-        const div = document.createElement('div');
-        div.className = 'chip';
-        div.style.borderColor = `color-mix(in srgb, ${color} 40%, transparent)`;
-        div.innerHTML = `<i class="bi ${icon}"></i> ${label} · ${state} (${score})`;
-        cont.appendChild(div);
-      }
-    }
-
-    // === Pronóstico 10 días (demo)
-    function renderForecast(predicciones = []){
-      const box = document.getElementById('forecast');
-      box.innerHTML = '';
-      const days = ['Today','Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-      for(let i=0;i<days.length;i++){
-        const score = predicciones[i] ?? Math.floor(40 + Math.random()*60);
-        const c = classifyScore(score);
-        const div = document.createElement('div');
-        div.className = 'day';
-        div.innerHTML = `<strong>${days[i]}</strong><span class="tag" style="border-color:${c.color}">${c.label} · ${score}</span>`;
-        box.appendChild(div);
-      }
-    }
-
-    // === Mapa
-    function initMap(){
-      map = L.map('map').setView([25.438, -100.99], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-    }
-
-    function renderPollution(){
-      markers.forEach(m=>map.removeLayer(m)); markers=[];
-      if(heat){map.removeLayer(heat);heat=null;}
-      const pts = rows.slice(-200).filter(r=>r.lat&&r.lon).map(r=>({lat:r.lat, lon:r.lon, s:scoreFrom(r)}));
-      if(window.L && L.heatLayer && pts.length){
-        const heatData = pts.map(p=>[p.lat,p.lon,Math.max(0.2,p.s/100)]);
-        heat = L.heatLayer(heatData,{radius:22,blur:18,maxZoom:12,minOpacity:.3}).addTo(map);
-      }
-    }
-
-    async function loadAirJson() {
-      try {
-        const res = await fetch('public/data/air_quality_data.json', { cache: 'no-cache' });
-        const data = await res.json();
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
-        data.forEach(zone => {
-          const aqi = Number(zone.AQI_Global ?? 0);
-          let color = 'gray';
-          if (aqi >= 90) color = '#00c853';
-          else if (aqi >=75) color = '#4caf50';
-          else if (aqi >=60) color = '#ffb300';
-          else if (aqi >=40) color = '#ff7043';
-          else color = '#e53935';
-
-          const marker = L.circleMarker([zone.latitude, zone.longitude], {
-            color, fillColor: color, fillOpacity: 0.6, radius: 10, weight: 2
-          }).addTo(map);
-
-          const html = `
-            <b>${zone.zone ?? 'Zona'}</b><br>
-            ${zone.datetime ? new Date(zone.datetime).toLocaleString() : ''}<br><br>
-            <b>Calidad:</b> ${zone.Calidad_Aire ?? ''} (${aqi.toFixed(1)}%)<br>
-            NO₂: ${zone.no2_value} · ${zone.no2_pct ?? '—'}%<br>
-            O₃:  ${zone.o3_value}  · ${zone.o3_pct  ?? '—'}%<br>
-            HCHO:${zone.hcho_value} · ${zone.hcho_pct?? '—'}%<br>
-            SO₂: ${zone.so2_value} · ${zone.so2_pct ?? '—'}%<br>
-            CO:  ${zone.co_value}  · ${zone.co_pct  ?? '—'}%<br>
-          `;
-          marker.bindPopup(html);
-          markers.push(marker);
-        });
-      } catch (err) {
-        console.error('Error cargando air_quality_data.json:', err);
-      }
-    }
-
-    async function loadCSVFromInput(file){
-      return new Promise((resolve,reject)=>{
-        Papa.parse(file,{header:true,dynamicTyping:true,skipEmptyLines:true,complete:res=>resolve(res.data),error:reject});
-      });
-    }
-    function ingest(data){
-      rows = data.map(normalizeRow).filter(r=>r.time && !Number.isNaN(r.co)).sort((a,b)=>a.time-b.time);
-      if(!rows.length){alert('CSV sin filas válidas');return;}
-      renderHourStrip();renderForecast();renderPollution();
-    }
-    document.addEventListener('dragover', e=>e.preventDefault());
-    document.addEventListener('drop', async e=>{
-      e.preventDefault();
-      const file = e.dataTransfer.files?.[0];
-      if(!file)return;
-      const data = await loadCSVFromInput(file);
-      ingest(data);
-    });
-
-    // ===== Login & Registro (demos) =====
-    const loginModal = createModal('Login', `
-      <p style="color:var(--muted)">Enter your email and password to access.</p>
-      <input id="loginEmail" type="email" placeholder="Correo" class="input" />
-      <input id="loginPass" type="password" placeholder="Contraseña" class="input" />
-      <button class="btn-primary" style="margin-top:8px" id="doLogin"><i class="bi bi-box-arrow-in-right"></i> Sign In</button>
-      <p id="loginMsg" class="msg"></p>
-      <p style="margin-top:8px;font-size:13px;">¿Don't have an account? <a href="#" id="goSignup">Sign Up</a></p>
-    `);
-    const signupModal = createModal('Sign In', `
-      <p style="color:var(--muted)">Create a new account to personalize your alerts.</p>
-      <input id="signupName" type="text" placeholder="Name" class="input" />
-      <input id="signupEmail" type="email" placeholder="Email" class="input" />
-      <input id="signupPass" type="password" placeholder="Password" class="input" />
-
-      <!-- 🌎 Campo de Ciudad -->
-      <div style="position: relative; margin-top: 8px;">
-        <input id="signupCity" type="text" placeholder="Your City" class="input" autocomplete="off" />
-        <div id="citySuggestions" style="
-          position: absolute; top: 100%; left: 0; right: 0;
-          background: #0e1525; border: 1px solid rgba(255,255,255,.1);
-          border-radius: 8px; max-height: 150px; overflow-y: auto;
-          display: none; z-index: 999;
-        "></div>
-      </div>
-
-      <!-- ❤️ Campo de Padecimientos -->
-      <p style="margin-top: 14px; color: var(--muted)">Select your health conditions:</p>
-      <div id="healthConditions" style="display: grid; gap: 6px; text-align: left; margin-top: 6px;">
-        <label><input type="checkbox" value="Asthma"> Asthma</label>
-        <label><input type="checkbox" value="Chronic Bronchitis"> Chronic Bronchitis</label>
-        <label><input type="checkbox" value="COPD"> COPD (Chronic Obstructive Pulmonary Disease)</label>
-        <label><input type="checkbox" value="Allergies"> Respiratory Allergies</label>
-        <label><input type="checkbox" value="Heart Disease"> Heart Disease</label>
-        <label><input type="checkbox" value="Sinusitis"> Sinusitis</label>
-        <label><input type="checkbox" value="None"> None</label>
-      </div>
-
-      <button class="btn-primary" style="margin-top:12px" id="doSignup">
-        <i class="bi bi-person-plus"></i> Sign Up
-      </button>
-      <p id="signupMsg" class="msg"></p>
-      <p style="margin-top:8px;font-size:13px;">Already have an account? <a href="#" id="goLogin">Log In</a></p>
-    `);
-
-    function createModal(title, contentHTML){
-      const modal = document.createElement('div');
-      modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="box">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h3><i class="bi bi-person-circle"></i> ${title}</h3>
-            <button class="icon-btn closeBtn"><i class="bi bi-x"></i></button>
-          </div>
-          <div class="content">${contentHTML}</div>
-        </div>`;
-      document.body.appendChild(modal);
-      modal.querySelector('.closeBtn').onclick = ()=>modal.style.display='none';
-      modal.onclick = e=>{if(e.target===modal)modal.style.display='none';};
-      return modal;
-    }
-
-    document.getElementById('btnLogin').onclick = ()=> loginModal.style.display='flex';
-    document.getElementById('btnSignin').onclick = ()=> signupModal.style.display='flex';
-
-    loginModal.querySelector('#goSignup').onclick = ()=>{ loginModal.style.display='none'; signupModal.style.display='flex'; };
-    // ====== AUTOCOMPLETADO LOCAL DE CIUDADES ======
-const cityList = [
-  "Saltillo", "Monterrey", "Guadalajara", "Mexico City", "Tijuana", "Puebla", "Cancun", 
-  "Mérida", "Querétaro", "León", "Chihuahua", "Veracruz", "Torreón", "Durango", "Hermosillo"
-];
-
-const cityInput = signupModal.querySelector('#signupCity');
-const cityBox = signupModal.querySelector('#citySuggestions');
-
-cityInput.addEventListener('input', () => {
-  const val = cityInput.value.toLowerCase().trim();
-  cityBox.innerHTML = '';
-  if (!val) { cityBox.style.display = 'none'; return; }
-
-  const matches = cityList.filter(c => c.toLowerCase().includes(val));
-  matches.forEach(city => {
-    const item = document.createElement('div');
-    item.textContent = city;
-    item.style.padding = '6px 10px';
-    item.style.cursor = 'pointer';
-    item.onclick = () => { cityInput.value = city; cityBox.style.display = 'none'; };
-    cityBox.appendChild(item);
+  const observer = new MutationObserver(actualizarAlertasDesdeAQI);
+  window.addEventListener("DOMContentLoaded", () => {
+    const aqiNode = document.getElementById("aqiValue");
+    if (aqiNode) observer.observe(aqiNode, { childList: true, characterData: true, subtree: true });
+    actualizarAlertasDesdeAQI();
   });
-  cityBox.style.display = matches.length ? 'block' : 'none';
-});
-    signupModal.querySelector('#goLogin').onclick = ()=>{ signupModal.style.display='none'; loginModal.style.display='flex'; };
 
-    loginModal.querySelector('#doLogin').onclick = ()=>{
-      const email = loginModal.querySelector('#loginEmail').value.trim();
-      const pass = loginModal.querySelector('#loginPass').value.trim();
-      const msg = loginModal.querySelector('#loginMsg');
-      const user = usersDB.find(u=>u.email===email && u.password===pass);
-      if(user){ msg.textContent = `Bienvenido, ${user.name}!`; msg.style.color = 'var(--good)'; setTimeout(()=>loginModal.style.display='none',1000); }
-      else { msg.textContent = "Usuario no encontrado. Redirigiendo a registro..."; msg.style.color = 'var(--bad)'; setTimeout(()=>{ loginModal.style.display='none'; signupModal.style.display='flex'; },1000); }
-    };
-    signupModal.querySelector('#doSignup').onclick = ()=>{
-      const name = signupModal.querySelector('#signupName').value.trim();
-      const email = signupModal.querySelector('#signupEmail').value.trim();
-      const pass = signupModal.querySelector('#signupPass').value.trim();
-      const msg = signupModal.querySelector('#signupMsg');
-      if(!name || !email || !pass){ msg.textContent = "Completa todos los campos."; msg.style.color = 'var(--bad)'; return; }
-      if(usersDB.some(u=>u.email===email)){ msg.textContent = "Ya existe una cuenta con ese correo."; msg.style.color = 'var(--regular)'; return; }
-      usersDB.push({name,email,password:pass}); msg.textContent = "Cuenta creada. ¡Inicia sesión!"; msg.style.color = 'var(--good)';
-      setTimeout(()=>{ signupModal.style.display='none'; loginModal.style.display='flex'; },1000);
-    };
+  // === Pronóstico (demo)
+  function renderHourStrip(predicciones = []){
+    const cont = document.getElementById('hourChips');
+    cont.innerHTML = '';
+    const now = new Date();
+    for(let i=0; i<10; i++){
+      const hour = new Date(now.getTime() + i*60*60*1000);
+      const label = i===0 ? 'Now' : `${hour.getHours().toString().padStart(2,'0')}:00`;
+      const score = predicciones[i] ?? Math.floor(40 + Math.random()*60);
+      const {label:state, color, icon} = classifyScore(score);
+      const div = document.createElement('div');
+      div.className = 'chip';
+      div.style.borderColor = `color-mix(in srgb, ${color} 40%, transparent)`;
+      div.innerHTML = `<i class="bi ${icon}"></i> ${label} · ${state} (${score})`;
+      cont.appendChild(div);
+    }
+  }
+  function renderForecast(predicciones = []){
+    const box = document.getElementById('forecast');
+    box.innerHTML = '';
+    const days = ['Today','Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    for(let i=0;i<days.length;i++){
+      const score = predicciones[i] ?? Math.floor(40 + Math.random()*60);
+      const c = classifyScore(score);
+      const div = document.createElement('div');
+      div.className = 'day';
+      div.innerHTML = `<strong>${days[i]}</strong><span class="tag" style="border-color:${c.color}">${c.label} · ${score}</span>`;
+      box.appendChild(div);
+    }
+  }
 
-    // ===== Boot =====
-    window.addEventListener('DOMContentLoaded', async ()=>{
-      initMap();
-      renderHourStrip();
-      renderForecast();
+  // === Mapa ===
+  function initMap(){
+    map = L.map('map').setView([25.438, -100.99], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+  }
 
-      // Demo CSV (opcional)
-      const sample = `datetime,latitude,longitude,no2,o3,hcho,so2,co
+  async function loadAirJson() {
+    try {
+      const res = await fetch('public/data/air_quality_data.json', { cache: 'no-cache' });
+      const data = await res.json();
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+      data.forEach(zone => {
+        const aqi = Number(zone.AQI_Global ?? 0);
+        let color = 'gray';
+        if (aqi >= 90) color = '#00c853';
+        else if (aqi >=75) color = '#4caf50';
+        else if (aqi >=60) color = '#ffb300';
+        else if (aqi >=40) color = '#ff7043';
+        else color = '#e53935';
+
+        const marker = L.circleMarker([zone.latitude, zone.longitude], {
+          color, fillColor: color, fillOpacity: 0.6, radius: 10, weight: 2
+        }).addTo(map);
+
+        const html = `
+          <b>${zone.zone ?? 'Zone'}</b><br>
+          ${zone.datetime ? new Date(zone.datetime).toLocaleString() : ''}<br><br>
+          <b>Quality:</b> ${zone.Calidad_Aire ?? ''} (${aqi.toFixed(1)}%)<br>
+          NO₂: ${zone.no2_value}<br>
+          O₃:  ${zone.o3_value}<br>
+          HCHO:${zone.hcho_value}<br>
+          SO₂: ${zone.so2_value}<br>
+          CO:  ${zone.co_value}<br>
+        `;
+        marker.bindPopup(html);
+        markers.push(marker);
+      });
+    } catch (err) {
+      console.error('Error loading air_quality_data.json:', err);
+    }
+  }
+
+  async function loadCSVFromInput(file){
+    return new Promise((resolve,reject)=>{
+      Papa.parse(file,{header:true,dynamicTyping:true,skipEmptyLines:true,complete:res=>resolve(res.data),error:reject});
+    });
+  }
+  function ingest(data){
+    rows = data.map(normalizeRow).filter(r=>r.time && !Number.isNaN(r.co)).sort((a,b)=>a.time-b.time);
+    if(!rows.length){alert('CSV without valid rows');return;}
+    renderHourStrip();renderForecast();renderPollution();
+  }
+  function renderPollution(){
+    markers.forEach(m=>map.removeLayer(m)); markers=[];
+    if(heat){map.removeLayer(heat);heat=null;}
+    const pts = rows.slice(-200).filter(r=>r.lat&&r.lon).map(r=>({lat:r.lat, lon:r.lon, s:scoreFrom(r)}));
+    if(window.L && L.heatLayer && pts.length){
+      const heatData = pts.map(p=>[p.lat,p.lon,Math.max(0.2,p.s/100)]);
+      heat = L.heatLayer(heatData,{radius:22,blur:18,maxZoom:12,minOpacity:.3}).addTo(map);
+    }
+  }
+
+  // === MODALES LOGIN / SIGNUP ===
+  function createModal(title, contentHTML){
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="box">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3><i class="bi bi-person-circle"></i> ${title}</h3>
+          <button class="icon-btn closeBtn"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="content">${contentHTML}</div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('.closeBtn').onclick = ()=>{ modal.style.display='none'; document.body.style.overflow='auto'; };
+    modal.onclick = e=>{if(e.target===modal){modal.style.display='none';document.body.style.overflow='auto';}};
+    return modal;
+  }
+
+  // === Login / Signup contenido ===
+  const loginModal = createModal('Login', `
+    <p style="color:var(--muted)">Enter your email and password to access.</p>
+    <input id="loginEmail" type="email" placeholder="Email" class="input" />
+    <input id="loginPass" type="password" placeholder="Password" class="input" />
+    <button class="btn-primary" style="margin-top:8px" id="doLogin"><i class="bi bi-box-arrow-in-right"></i> Sign In</button>
+    <p id="loginMsg" class="msg"></p>
+    <p style="margin-top:8px;font-size:13px;">Don't have an account? <a href="#" id="goSignup">Sign Up</a></p>
+  `);
+
+  const signupModal = createModal('Sign In', `
+    <p style="color:var(--muted)">Create a new account to personalize your alerts.</p>
+    <input id="signupName" type="text" placeholder="Name" class="input" />
+    <input id="signupEmail" type="email" placeholder="Email" class="input" />
+    <input id="signupPass" type="password" placeholder="Password" class="input" />
+
+    <div style="position: relative; margin-top: 8px;">
+      <input id="signupCity" type="text" placeholder="Your City" class="input" autocomplete="off" />
+      <div id="citySuggestions" style="position:absolute;top:100%;left:0;right:0;background:#0e1525;border:1px solid rgba(255,255,255,.1);border-radius:8px;max-height:150px;overflow-y:auto;display:none;z-index:999;"></div>
+    </div>
+
+    <p style="margin-top:14px;color:var(--muted)">Select your health conditions:</p>
+    <div id="healthConditions" style="display:grid;gap:6px;text-align:left;margin-top:6px;">
+      <label><input type="checkbox" value="Asthma"> Asthma</label>
+      <label><input type="checkbox" value="Chronic Bronchitis"> Chronic Bronchitis</label>
+      <label><input type="checkbox" value="COPD"> COPD</label>
+      <label><input type="checkbox" value="Allergies"> Respiratory Allergies</label>
+      <label><input type="checkbox" value="Heart Disease"> Heart Disease</label>
+      <label><input type="checkbox" value="Sinusitis"> Sinusitis</label>
+      <label><input type="checkbox" value="None"> None</label>
+    </div>
+
+    <button class="btn-primary" style="margin-top:12px" id="doSignup"><i class="bi bi-person-plus"></i> Sign Up</button>
+    <p id="signupMsg" class="msg"></p>
+    <p style="margin-top:8px;font-size:13px;">Already have an account? <a href="#" id="goLogin">Log In</a></p>
+  `);
+
+  // === Lógica ===
+  const cityList = ["Saltillo","Monterrey","Guadalajara","Mexico City","Tijuana","Puebla","Cancun","Mérida","Querétaro","León","Chihuahua","Veracruz","Torreón","Durango","Hermosillo"];
+  const cityInput = signupModal.querySelector('#signupCity');
+  const cityBox = signupModal.querySelector('#citySuggestions');
+  cityInput.addEventListener('input', () => {
+    const val = cityInput.value.toLowerCase().trim();
+    cityBox.innerHTML = '';
+    if (!val) { cityBox.style.display = 'none'; return; }
+    const matches = cityList.filter(c => c.toLowerCase().includes(val));
+    matches.forEach(city => {
+      const item = document.createElement('div');
+      item.textContent = city;
+      item.style.padding = '6px 10px';
+      item.style.cursor = 'pointer';
+      item.onclick = () => { cityInput.value = city; cityBox.style.display = 'none'; };
+      cityBox.appendChild(item);
+    });
+    cityBox.style.display = matches.length ? 'block' : 'none';
+  });
+
+  // none desactiva el resto
+  signupModal.querySelectorAll('#healthConditions input[value="None"]')[0].addEventListener('change', (e)=>{
+    if(e.target.checked){
+      signupModal.querySelectorAll('#healthConditions input:not([value="None"])').forEach(ch=>ch.checked=false);
+    }
+  });
+  signupModal.querySelectorAll('#healthConditions input:not([value="None"])').forEach(ch=>{
+    ch.addEventListener('change', ()=>{
+      if(ch.checked)
+        signupModal.querySelector('#healthConditions input[value="None"]').checked=false;
+    });
+  });
+
+  // Botones
+  document.getElementById('btnLogin').onclick = ()=>{ loginModal.style.display='flex';document.body.style.overflow='hidden'; };
+  document.getElementById('btnSignin').onclick = ()=>{ signupModal.style.display='flex';document.body.style.overflow='hidden'; };
+  loginModal.querySelector('#goSignup').onclick = ()=>{ loginModal.style.display='none'; signupModal.style.display='flex';document.body.style.overflow='hidden'; };
+  signupModal.querySelector('#goLogin').onclick = ()=>{ signupModal.style.display='none'; loginModal.style.display='flex';document.body.style.overflow='hidden'; };
+
+  loginModal.querySelector('#doLogin').onclick = ()=>{
+    const email = loginModal.querySelector('#loginEmail').value.trim();
+    const pass = loginModal.querySelector('#loginPass').value.trim();
+    const msg = loginModal.querySelector('#loginMsg');
+    const user = usersDB.find(u=>u.email===email && u.password===pass);
+    if(user){ msg.textContent = `Welcome, ${user.name}!`; msg.style.color = 'var(--good)'; setTimeout(()=>{loginModal.style.display='none';document.body.style.overflow='auto';},1000); }
+    else { msg.textContent = "User not found. Redirecting..."; msg.style.color = 'var(--bad)'; setTimeout(()=>{ loginModal.style.display='none'; signupModal.style.display='flex';document.body.style.overflow='hidden'; },1000); }
+  };
+
+  signupModal.querySelector('#doSignup').onclick = ()=>{
+    const name = signupModal.querySelector('#signupName').value.trim();
+    const email = signupModal.querySelector('#signupEmail').value.trim();
+    const pass = signupModal.querySelector('#signupPass').value.trim();
+    const city = signupModal.querySelector('#signupCity').value.trim();
+    const msg = signupModal.querySelector('#signupMsg');
+    if(!name || !email || !pass || !city){ msg.textContent = "Complete all fields."; msg.style.color = 'var(--bad)'; return; }
+    if(!cityList.some(c => c.toLowerCase() === city.toLowerCase())){ msg.textContent = "Invalid city."; msg.style.color = 'var(--bad)'; return; }
+    if(usersDB.some(u=>u.email===email)){ msg.textContent = "Account already exists."; msg.style.color = 'var(--regular)'; return; }
+    usersDB.push({name,email,password:pass,city}); msg.text
+    usersDB.push({name,email,password:pass,city});
+    msg.textContent = "Account created successfully! Please log in.";
+    msg.style.color = 'var(--good)';
+    setTimeout(()=>{
+      signupModal.style.display = 'none';
+      loginModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    },1000);
+  };
+
+  // ===== Drag & Drop CSV (opcional) =====
+  document.addEventListener('dragover', e=>e.preventDefault());
+  document.addEventListener('drop', async e=>{
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if(!file)return;
+    const data = await loadCSVFromInput(file);
+    ingest(data);
+  });
+
+  // ===== Boot =====
+  window.addEventListener('DOMContentLoaded', async ()=>{
+    initMap();
+    renderHourStrip();
+    renderForecast();
+
+    // Demo CSV temporal
+    const sample = `datetime,latitude,longitude,no2,o3,hcho,so2,co
 2025-10-04 06:00:00+00:00,25.43932,-100.98761,48.70,-37.15,0.000248,0.000156,0.013653
 2025-10-04 06:15:00+00:00,25.43695,-100.99498,44.15,-37.66,0.000112,0.000190,0.032190
 2025-10-04 06:30:00+00:00,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
-      Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
+    Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
 
-      // Marcadores desde JSON
-      loadAirJson();
-    });
-  </script>
+    // Cargar marcadores del JSON
+    loadAirJson();
+  });
+</script>
+
+
 </body>
 </html>
