@@ -160,7 +160,7 @@
     <div class="air-box">
       <p class="location"><i class="bi bi-geo-alt-fill"></i> Saltillo, Coahuila</p>
       <h2 class="status" id="aqiStatus">REGULAR</h2>
-      <p class="aqi-text">Air Quality <span id="aqiValue">57</span></p>
+      <p class="aqi-text">Air Quality <span id="aqiValue">37</span></p>
       <div class="aqi-bar">
         <div class="gradient-bar"></div>
         <div class="indicator" id="aqiIndicator" style="left: 67%;"></div>
@@ -254,6 +254,13 @@
       description = "⚠️ Pollution levels are high. It’s recommended to stay indoors.";
       bgColor = "linear-gradient(180deg, rgba(231,76,60,.15), rgba(231,76,60,.05))";
       color = "var(--bad)"; icon = "bi-emoji-frown"; statusEl.textContent = "POOR";
+
+      // === Mostrar alerta personalizada si hay usuario logeado
+      if (window.currentUser && !window.healthAlertShown) {
+        window.healthAlertShown = true; // evita repetirla
+        showHealthAlert(window.currentUser, aqi);
+      }
+
     } else if (aqi <= 60) {
       message = "Moderate air quality";
       description = "There are some pollutants present. Avoid intense outdoor activities.";
@@ -278,12 +285,55 @@
     `;
   }
 
+
   const observer = new MutationObserver(actualizarAlertasDesdeAQI);
   window.addEventListener("DOMContentLoaded", () => {
     const aqiNode = document.getElementById("aqiValue");
     if (aqiNode) observer.observe(aqiNode, { childList: true, characterData: true, subtree: true });
     actualizarAlertasDesdeAQI();
   });
+
+// === Modal de alerta personalizada
+  function showHealthAlert(user, aqi) {
+    // evita mostrarlo varias veces
+    if (document.querySelector('#healthAlertModal')) return;
+
+    const advice = {
+      "Asthma": "wheezing, chest tightness or shortness of breath.",
+      "Chronic Bronchitis": "increased coughing and mucus production.",
+      "COPD": "reduced breathing capacity and chest discomfort.",
+      "Allergies": "runny nose, itchy eyes and sneezing.",
+      "Heart Disease": "increased risk of palpitations and fatigue.",
+      "Sinusitis": "sinus pressure and headache."
+    };
+
+    const userConditions = user.conditions?.filter(c => c !== "None") || [];
+    let risksHTML = userConditions.length
+      ? userConditions.map(c => `<li>${advice[c] || "general respiratory irritation."}</li>`).join('')
+      : `<li>general discomfort due to pollution.</li>`;
+
+    const modal = document.createElement('div');
+    modal.id = 'healthAlertModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="box" style="border:2px solid var(--bad);background:#0b1220;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3><i class="bi bi-exclamation-octagon" style="color:var(--bad);"></i> Health Alert</h3>
+          <button class="icon-btn closeBtn"><i class="bi bi-x"></i></button>
+        </div>
+        <p style="color:#ffcccc;">
+          ⚠️ Cuidado ${user.name}, the air quality in your area is <b>poor</b> (AQI ${aqi}).
+        </p>
+        <p style="color:var(--muted);">We recommend avoiding outdoor activities. You may experience:</p>
+        <ul style="color:#cfe3ff; margin-left:20px;">${risksHTML}</ul>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    modal.querySelector('.closeBtn').onclick = () => { modal.remove(); document.body.style.overflow='auto'; };
+    modal.onclick = e => { if(e.target===modal){ modal.remove(); document.body.style.overflow='auto'; } };
+  }
 
   // === Pronóstico (demo)
   function renderHourStrip(predicciones = []){
@@ -476,34 +526,86 @@
   loginModal.querySelector('#goSignup').onclick = ()=>{ loginModal.style.display='none'; signupModal.style.display='flex';document.body.style.overflow='hidden'; };
   signupModal.querySelector('#goLogin').onclick = ()=>{ signupModal.style.display='none'; loginModal.style.display='flex';document.body.style.overflow='hidden'; };
 
-  loginModal.querySelector('#doLogin').onclick = ()=>{
-    const email = loginModal.querySelector('#loginEmail').value.trim();
-    const pass = loginModal.querySelector('#loginPass').value.trim();
-    const msg = loginModal.querySelector('#loginMsg');
-    const user = usersDB.find(u=>u.email===email && u.password===pass);
-    if(user){ msg.textContent = `Welcome, ${user.name}!`; msg.style.color = 'var(--good)'; setTimeout(()=>{loginModal.style.display='none';document.body.style.overflow='auto';},1000); }
-    else { msg.textContent = "User not found. Redirecting..."; msg.style.color = 'var(--bad)'; setTimeout(()=>{ loginModal.style.display='none'; signupModal.style.display='flex';document.body.style.overflow='hidden'; },1000); }
-  };
+  // === LOGIN ===
+loginModal.querySelector('#doLogin').onclick = () => {
+  const email = loginModal.querySelector('#loginEmail').value.trim();
+  const pass = loginModal.querySelector('#loginPass').value.trim();
+  const msg = loginModal.querySelector('#loginMsg');
 
-  signupModal.querySelector('#doSignup').onclick = ()=>{
-    const name = signupModal.querySelector('#signupName').value.trim();
-    const email = signupModal.querySelector('#signupEmail').value.trim();
-    const pass = signupModal.querySelector('#signupPass').value.trim();
-    const city = signupModal.querySelector('#signupCity').value.trim();
-    const msg = signupModal.querySelector('#signupMsg');
-    if(!name || !email || !pass || !city){ msg.textContent = "Complete all fields."; msg.style.color = 'var(--bad)'; return; }
-    if(!cityList.some(c => c.toLowerCase() === city.toLowerCase())){ msg.textContent = "Invalid city."; msg.style.color = 'var(--bad)'; return; }
-    if(usersDB.some(u=>u.email===email)){ msg.textContent = "Account already exists."; msg.style.color = 'var(--regular)'; return; }
-    usersDB.push({name,email,password:pass,city}); msg.text
-    usersDB.push({name,email,password:pass,city});
-    msg.textContent = "Account created successfully! Please log in.";
+  // Buscar usuario (no validamos duplicados)
+  const user = usersDB.find(u => u.email === email && u.password === pass);
+  if (user) {
+    msg.textContent = `Welcome, ${user.name}!`;
     msg.style.color = 'var(--good)';
-    setTimeout(()=>{
-      signupModal.style.display = 'none';
-      loginModal.style.display = 'flex';
+    window.currentUser = user;
+    window.healthAlertShown = false; // reset para mostrar alertas nuevas
+    setTimeout(() => {
+      loginModal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+      verificarAQIInicial(); // 👈 al iniciar sesión, revisar si el aire es malo
+    }, 1000);
+  } else {
+    msg.textContent = "User not found. Redirecting to sign up...";
+    msg.style.color = 'var(--bad)';
+    setTimeout(() => {
+      loginModal.style.display = 'none';
+      signupModal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
-    },1000);
-  };
+    }, 1000);
+  }
+};
+
+// === SIGNUP ===
+signupModal.querySelector('#doSignup').onclick = () => {
+  const name = signupModal.querySelector('#signupName').value.trim();
+  const email = signupModal.querySelector('#signupEmail').value.trim();
+  const pass = signupModal.querySelector('#signupPass').value.trim();
+  const city = signupModal.querySelector('#signupCity').value.trim();
+  const msg = signupModal.querySelector('#signupMsg');
+  const selectedConditions = Array.from(
+    signupModal.querySelectorAll('#healthConditions input:checked')
+  ).map(ch => ch.value);
+
+  if (!name || !email || !pass || !city) {
+    msg.textContent = "Complete all fields.";
+    msg.style.color = 'var(--bad)';
+    return;
+  }
+  if (!cityList.some(c => c.toLowerCase() === city.toLowerCase())) {
+    msg.textContent = "Invalid city.";
+    msg.style.color = 'var(--bad)';
+    return;
+  }
+
+  const newUser = { name, email, password: pass, city, conditions: selectedConditions };
+  usersDB.push(newUser);
+  msg.textContent = "Account created successfully!";
+  msg.style.color = 'var(--good)';
+  setTimeout(() => {
+    signupModal.style.display = 'none';
+    loginModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }, 1000);
+};
+
+// === FUNCIÓN PARA MOSTRAR ALERTA SI EL AIRE ES MALO AL CARGAR ===
+function verificarAQIInicial() {
+  const aqiEl = document.getElementById("aqiValue");
+  const aqi = parseFloat(aqiEl?.textContent.trim()) || 0;
+  if (aqi < 41 && window.currentUser && !window.healthAlertShown) {
+    window.healthAlertShown = true;
+    setTimeout(() => {
+      showHealthAlert(window.currentUser, aqi);
+    }, 1500); // pequeño delay para no interrumpir la carga inicial
+  }
+}
+
+// === LLAMAR TAMBIÉN AL CARGAR LA PÁGINA SI YA HAY USUARIO ACTIVO ===
+window.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    verificarAQIInicial();
+  }, 1500);
+});
 
   // ===== Drag & Drop CSV (opcional) =====
   document.addEventListener('dragover', e=>e.preventDefault());
@@ -531,6 +633,73 @@
     // Cargar marcadores del JSON
     loadAirJson();
   });
+  /* ====== ALERTA AUTOMÁTICA SI AQI ES MALO ====== */
+
+// Función para crear el modal de alerta visual
+function showHealthAlert(aqi) {
+  // Evita que se muestre más de una vez
+  if (window.healthAlertShown) return;
+  window.healthAlertShown = true;
+
+  const modal = document.createElement("div");
+  modal.id = "healthAlertModal";
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="box" style="border:2px solid var(--bad);background:#0b1220;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="color:var(--bad)">
+          <i class="bi bi-exclamation-octagon"></i> Health Alert
+        </h3>
+        <button class="icon-btn closeBtn"><i class="bi bi-x"></i></button>
+      </div>
+      <p style="color:#ffcccc;margin-top:10px">
+        ⚠️ TestUser, Air quality is currently <b>poor</b> (AQI ${aqi}). 
+        It’s recommended to stay indoors and limit outdoor activity.
+      </p>
+      <p style="color:#ffcccc;margin-top:10px">
+        You that have asthma can present the next syntoms:
+      </p>
+      <ul style="color:#ffcccc">
+        <li>Tos persistente o más frecuente de lo normal</li>
+        <li>Dificultad para respirar (disnea leve)</li>
+        <li>Sensación de opresión en el pecho</li>
+        <li>Irritación en garganta o nariz</li>
+        <li>Cansancio o debilidad general al realizar actividades físicas</li>
+      <ul>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+  modal.querySelector(".closeBtn").onclick = () => {
+    modal.remove();
+    document.body.style.overflow = "auto";
+  };
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.remove();
+      document.body.style.overflow = "auto";
+    }
+  };
+}
+
+// Revisa el valor de AQI actual y muestra alerta si es bajo
+function verificarAQIInicial() {
+  const aqiEl = document.getElementById("aqiValue");
+  if (!aqiEl) return;
+  const aqi = parseFloat(aqiEl.textContent.trim()) || 0;
+  console.log("AQI detectado:", aqi);
+  if (aqi < 41) {
+    setTimeout(() => {
+      showHealthAlert(aqi);
+    }, 1500); // delay de 1.5 s para no interrumpir la carga
+  }
+}
+
+// Ejecutar la verificación al cargar completamente la página
+window.addEventListener("DOMContentLoaded", () => {
+  verificarAQIInicial();
+});
 </script>
 
 
