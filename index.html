@@ -81,8 +81,15 @@
     .btn-primary{display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:14px; border:1px solid rgba(255,255,255,.18); background:linear-gradient(180deg, rgba(111,177,255,.35), rgba(111,177,255,.15)); font-weight:800; text-decoration:none; color:var(--text)}
     .btn-primary:hover{background:linear-gradient(180deg, rgba(111,177,255,.45), rgba(111,177,255,.25));}
 
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50;}
+    .modal{z-index: 9999 !important; position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50;}
     .modal .box{background:#0e1525; border:1px solid rgba(255,255,255,.12); border-radius:16px; width:min(420px,92vw); padding:16px; animation:fadeIn .3s;}
+    .leaflet-pane,
+    .leaflet-top,
+    .leaflet-bottom {
+      z-index: 100 !important;
+    }
+    .modal .closeBtn i {color: #ffffff !important; font-size: 20px; pointer-events: none;}
+    .modal .closeBtn:hover i {color: var(--brand); /* Azul claro al pasar el cursor */}
     .modal h3{margin:0 0 12px}
     .input{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0b1220;color:var(--text);}
     .input:focus{outline:none;border-color:var(--brand);}
@@ -104,7 +111,7 @@
       <div class="row">
         <div class="logo">TEMPO AIR</div>
         <nav>
-          <a class="nav-btn" href="#explorar">Explorar mapa</a>
+          <a class="nav-btn" href="#explorar">Explore Map</a>
           <a class="nav-btn" href="#" id="btnLogin">Login</a>
           <a class="nav-btn" href="#" id="btnSignin">Sign In</a>
         </nav>
@@ -118,14 +125,14 @@
     <div class="overlay"></div>
     <div class="title">
       <h1>TEMPO AIR</h1>
-      <p>Monitorea la calidad del aire con datos satelitales TEMPO y recibe alertas personalizadas para cuidar tu salud y la de tu familia.</p>
+      <p>Monitor air quality with TEMPO satellite data and receive personalized alerts to take care of your health and that of your family.</p>
     </div>
   </section>
 
   <!-- Hora -->
   <section class="hour-strip">
     <div class="hour-content">
-      <div class="hour-label">Estadísticas</div>
+      <div class="hour-label">Statistics</div>
       <div class="chips" id="hourChips"></div>
     </div>
   </section>
@@ -138,7 +145,7 @@
         <div class="forecast-list" id="forecast"></div>
       </div>
       <div class="card">
-        <h3>Mapa de contaminación – Saltillo</h3>
+        <h3>Air Pollution Map Analysis</h3>
         <div id="map"></div>
       </div>
     </div>
@@ -149,7 +156,7 @@
     <div class="alert-panel">
       <h3>ALERTAS</h3>
       <p><strong>El aire está limpio hoy.</strong></p>
-      <p>Los principales componentes del aire están en niveles normales.</p>
+      <p>The main components of the air are at normal levels.</p>
       <div id="alerts"></div>
     </div>
   </section>
@@ -157,7 +164,7 @@
   <!-- Botón Power BI -->
   <section class="section center">
     <a class="btn-primary" id="btnPowerBI" href="#" target="_blank" rel="noopener">
-      <i class="bi bi-graph-up"></i> Estadísticas
+      <i class="bi bi-graph-up"></i> Statistics
     </a>
   </section>
 
