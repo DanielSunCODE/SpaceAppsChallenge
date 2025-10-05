@@ -43,7 +43,7 @@
     .wrap{max-width:1200px; margin:0 auto; padding:0 20px; width:100%}
     .row{display:flex; align-items:center; justify-content:space-between; gap:16px}
     .logo{font-weight:800; letter-spacing:.5px}
-    nav{display:flex; gap:10px; align-items:center}
+    nav{z-index: 999;display:flex; gap:10px; align-items:center}
     .nav-btn{font-weight:700; font-size:14px; padding:8px 12px; border-radius:12px; text-decoration:none; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
     .nav-btn:hover{border-color:rgba(255,255,255,.35)}
     .icon-btn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
@@ -71,8 +71,13 @@
     .hour-label{font-weight:800;color:#cfe3ff}
     .chips{display:flex;gap:8px;overflow:auto;padding-bottom:6px}
     .chip{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);background:#0e1525;white-space:nowrap;font-weight:700;font-size:12px}
+      border:1px solid rgba(255,255,255,.14);background:#0e1525;white-space:nowrap;font-weight:700;font-size:12px;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE y Edge antiguos */}
     .chip .bi{font-size:14px}
+    .chips::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Edge (moderno) */
+    }
 
     .section{max-width:1200px; margin:18px auto; padding:0 20px}
     .grid{display:grid; grid-template-columns: 1fr 3fr; gap:16px}
@@ -84,7 +89,7 @@
     .day strong{letter-spacing:.2px}
     .tag{font-size:12px; font-weight:800; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16)}
 
-    #map{height: calc(80vh - 60px); border-radius:12px}
+    #map{height: calc(80vh - 60px); border-radius:12px; z-index: 10;}
 
     .alerts{max-width:1200px; margin:18px auto; padding:0 20px}
     .alert-panel{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px}
@@ -95,7 +100,7 @@
     .btn-primary:hover{background:linear-gradient(180deg, rgba(111,177,255,.45), rgba(111,177,255,.25));}
 
     .modal{z-index: 9999 !important; position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center;}
-    .modal .box{background:#0e1525; border:1px solid rgba(255,255,255,.12); border-radius:16px; width:min(420px,92vw); padding:16px; animation:fadeIn .3s;}
+    .modal .box{background:#0e1525; border:1px solid rgba(255,255,255,.12); border-radius:16px; width:min(464px,92vw); padding:16px; animation:fadeIn .3s;overflow-y: auto;max-height: 80vh;}
     .leaflet-pane,.leaflet-top,.leaflet-bottom {z-index:100 !important;}
     .modal .closeBtn i {color: #ffffff !important; font-size: 20px; pointer-events: none;}
     .modal .closeBtn:hover i {color: var(--brand);}
@@ -166,7 +171,7 @@
   <!-- Hour Forecast -->
   <section class="hour-strip">
     <div class="hour-content">
-      <div class="hour-label">10-Day Forecast</div>
+      <div class="hour-label">HOUR PER HOUR FORECAST</div>
       <div class="chips" id="hourChips"></div>
     </div>
   </section>
@@ -401,14 +406,40 @@
       <p id="loginMsg" class="msg"></p>
       <p style="margin-top:8px;font-size:13px;">¿Don't have an account? <a href="#" id="goSignup">Sign Up</a></p>
     `);
-    const signupModal = createModal('Registro', `
+    const signupModal = createModal('Sign In', `
       <p style="color:var(--muted)">Create a new account to personalize your alerts.</p>
-      <input id="signupName" type="text" placeholder="Nombre" class="input" />
-      <input id="signupEmail" type="email" placeholder="Correo" class="input" />
-      <input id="signupPass" type="password" placeholder="Contraseña" class="input" />
-      <button class="btn-primary" style="margin-top:8px" id="doSignup"><i class="bi bi-person-plus"></i> Sign Up</button>
+      <input id="signupName" type="text" placeholder="Name" class="input" />
+      <input id="signupEmail" type="email" placeholder="Email" class="input" />
+      <input id="signupPass" type="password" placeholder="Password" class="input" />
+
+      <!-- 🌎 Campo de Ciudad -->
+      <div style="position: relative; margin-top: 8px;">
+        <input id="signupCity" type="text" placeholder="Your City" class="input" autocomplete="off" />
+        <div id="citySuggestions" style="
+          position: absolute; top: 100%; left: 0; right: 0;
+          background: #0e1525; border: 1px solid rgba(255,255,255,.1);
+          border-radius: 8px; max-height: 150px; overflow-y: auto;
+          display: none; z-index: 999;
+        "></div>
+      </div>
+
+      <!-- ❤️ Campo de Padecimientos -->
+      <p style="margin-top: 14px; color: var(--muted)">Select your health conditions:</p>
+      <div id="healthConditions" style="display: grid; gap: 6px; text-align: left; margin-top: 6px;">
+        <label><input type="checkbox" value="Asthma"> Asthma</label>
+        <label><input type="checkbox" value="Chronic Bronchitis"> Chronic Bronchitis</label>
+        <label><input type="checkbox" value="COPD"> COPD (Chronic Obstructive Pulmonary Disease)</label>
+        <label><input type="checkbox" value="Allergies"> Respiratory Allergies</label>
+        <label><input type="checkbox" value="Heart Disease"> Heart Disease</label>
+        <label><input type="checkbox" value="Sinusitis"> Sinusitis</label>
+        <label><input type="checkbox" value="None"> None</label>
+      </div>
+
+      <button class="btn-primary" style="margin-top:12px" id="doSignup">
+        <i class="bi bi-person-plus"></i> Sign Up
+      </button>
       <p id="signupMsg" class="msg"></p>
-      <p style="margin-top:8px;font-size:13px;">¿Ya tienes cuenta? <a href="#" id="goLogin">Log In</a></p>
+      <p style="margin-top:8px;font-size:13px;">Already have an account? <a href="#" id="goLogin">Log In</a></p>
     `);
 
     function createModal(title, contentHTML){
@@ -432,6 +463,31 @@
     document.getElementById('btnSignin').onclick = ()=> signupModal.style.display='flex';
 
     loginModal.querySelector('#goSignup').onclick = ()=>{ loginModal.style.display='none'; signupModal.style.display='flex'; };
+    // ====== AUTOCOMPLETADO LOCAL DE CIUDADES ======
+const cityList = [
+  "Saltillo", "Monterrey", "Guadalajara", "Mexico City", "Tijuana", "Puebla", "Cancun", 
+  "Mérida", "Querétaro", "León", "Chihuahua", "Veracruz", "Torreón", "Durango", "Hermosillo"
+];
+
+const cityInput = signupModal.querySelector('#signupCity');
+const cityBox = signupModal.querySelector('#citySuggestions');
+
+cityInput.addEventListener('input', () => {
+  const val = cityInput.value.toLowerCase().trim();
+  cityBox.innerHTML = '';
+  if (!val) { cityBox.style.display = 'none'; return; }
+
+  const matches = cityList.filter(c => c.toLowerCase().includes(val));
+  matches.forEach(city => {
+    const item = document.createElement('div');
+    item.textContent = city;
+    item.style.padding = '6px 10px';
+    item.style.cursor = 'pointer';
+    item.onclick = () => { cityInput.value = city; cityBox.style.display = 'none'; };
+    cityBox.appendChild(item);
+  });
+  cityBox.style.display = matches.length ? 'block' : 'none';
+});
     signupModal.querySelector('#goLogin').onclick = ()=>{ signupModal.style.display='none'; loginModal.style.display='flex'; };
 
     loginModal.querySelector('#doLogin').onclick = ()=>{
