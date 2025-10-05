@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TEMPO AIR – Panel</title>
 
+  
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,39 +27,43 @@
 
   <style>
     :root{
-      --bg:#0b1220; --text:#e9f0ff; --muted:#93a4c2; --card:#0e1525;
-      --good:#2ecc71; --regular:#f1c40f; --bad:#e74c3c; --brand:#6fb1ff;
+      --bg:#0b1220;--text:#e9f0ff;--muted:#93a4c2;--card:#0e1525;
+      --good:#2ecc71;--regular:#f1c40f;--bad:#e74c3c;--brand:#6fb1ff;
     }
     *{box-sizing:border-box}
-    body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text)}
-    a{color:inherit; text-decoration:none}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    a{color:inherit;text-decoration:none}
+    html{scroll-behavior:smooth;}
 
     header{
-      position:fixed; inset:0 auto auto 0; height:64px; z-index:20;
-      display:flex; align-items:center; width:100%;
-      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.00));
-      backdrop-filter: blur(6px);
+      position:fixed;top:0;left:0;right:0;height:64px;z-index:20;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 24px;background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.00));
+      backdrop-filter:blur(6px);
     }
-    .wrap{max-width:1200px; margin:0 auto; padding:0 20px; width:100%}
-    .row{display:flex; align-items:center; justify-content:space-between; gap:16px}
-    .logo{font-weight:800; letter-spacing:.5px}
-    nav{display:flex; gap:10px; align-items:center}
-    .nav-btn{font-weight:700; font-size:14px; padding:8px 12px; border-radius:12px; text-decoration:none; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
+    .logo{font-weight:800;letter-spacing:.5px}
+    .nav-btn{font-weight:700;font-size:14px;padding:8px 12px;border-radius:12px;text-decoration:none;
+      border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);margin-left:8px}
     .nav-btn:hover{border-color:rgba(255,255,255,.35)}
     .icon-btn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
 
-    .banner{position:relative; height:52vh; min-height:360px; width:100%; overflow:hidden}
-    .banner img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
-    .banner .overlay{position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(11,18,32,1) 80%)}
-    .banner .title{position:absolute; bottom:24px; left:50%; transform:translateX(-50%); width:min(1200px, 92vw); padding:0 20px}
-    .title h1{margin:0; font-size:clamp(28px,4.5vw,48px)}
-    .title p{margin:6px 0 0; color:var(--muted)}
+    .banner{position:relative;height:52vh;min-height:360px;width:100%;overflow:hidden;text-align:center}
+    .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .banner .overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(11,18,32,1) 80%)}
+    .title{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:min(1200px,92vw);padding:0 20px}
+    .title h1{margin:0;font-size:clamp(28px,4.5vw,48px)}
+    .title p{margin:6px 0 16px;color:var(--muted)}
+    .explore-btn{display:inline-block;background:#d9d9d9;color:#000;font-weight:600;font-size:16px;
+      padding:12px 32px;border-radius:999px;text-decoration:none;transition:all 0.3s ease;}
+    .explore-btn:hover{background:#fff;transform:translateY(-3px)}
 
-    .hour-strip{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08)}
-    .hour-content{max-width:1200px; margin:0 auto; padding:14px 20px; display:grid; grid-template-columns: 120px 1fr; gap:16px; align-items:center}
-    .hour-label{font-weight:800; color:#cfe3ff}
-    .chips{display:flex; gap:8px; overflow:auto; padding-bottom:6px}
-    .chip{display:flex; align-items:center; gap:6px; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:#0e1525; white-space:nowrap; font-weight:700; font-size:12px}
+    .hour-strip{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+    .hour-content{max-width:1200px;margin:0 auto;padding:14px 20px;display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center}
+    .hour-label{font-weight:800;color:#cfe3ff}
+    .chips{display:flex;gap:8px;overflow:auto;padding-bottom:6px}
+    .chip{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);background:#0e1525;white-space:nowrap;font-weight:700;font-size:12px}
     .chip .bi{font-size:14px}
 
     .section{max-width:1200px; margin:18px auto; padding:0 20px}
@@ -121,7 +126,7 @@
 
   <!-- Banner -->
   <section class="banner">
-    <img src="./Media/BannerImg.png" alt="Banner" />
+    <img src="./Media/BannerImg.png" alt="Banner">
     <div class="overlay"></div>
     <div class="title">
       <h1>TEMPO AIR</h1>
@@ -129,10 +134,10 @@
     </div>
   </section>
 
-  <!-- Hora -->
+  <!-- Hour Forecast -->
   <section class="hour-strip">
     <div class="hour-content">
-      <div class="hour-label">Statistics</div>
+      <div class="hour-label">10-Day Forecast</div>
       <div class="chips" id="hourChips"></div>
     </div>
   </section>
@@ -203,50 +208,44 @@
       return {time, lat, lon, no2, o3, hcho, so2, co};
     }
 
-    // ===== Render =====
-    function renderHourStrip(){
+    // === Pronóstico por hora (para modelo predictivo) ===
+    function renderHourStrip(predicciones = []){
       const cont = document.getElementById('hourChips');
       cont.innerHTML = '';
-      const last = rows.slice(-64);
-      const byHour = new Map();
-      for(const r of last){
-        const k = r.time.toISOString().slice(0,13);
-        const list = byHour.get(k) || []; list.push(scoreFrom(r)); byHour.set(k, list);
-      }
-      const items = Array.from(byHour.entries()).map(([k,vals])=>{
-        const score = vals.reduce((a,b)=>a+b,0)/vals.length;
-        const {label,color,icon} = classifyScore(score);
-        const hour = new Date(k+':00:00Z');
-        return {hour, label, color, icon, score:Math.round(score)}
-      });
-      for(const it of items){
+      const now = new Date();
+      for(let i=0; i<10; i++){
+        const hour = new Date(now.getTime() + i*60*60*1000);
+        const label = i===0 ? 'Now' : `${hour.getHours().toString().padStart(2,'0')}:00`;
+        const score = predicciones[i] ?? Math.floor(40 + Math.random()*60);
+        const {label:state, color, icon} = classifyScore(score);
         const div = document.createElement('div');
         div.className = 'chip';
-        div.style.borderColor = `color-mix(in srgb, ${it.color} 40%, transparent)`;
-        div.innerHTML = `<i class="bi ${it.icon}"></i> ${it.hour.toLocaleTimeString([], {hour:'2-digit'})} · ${it.label}`;
+        div.style.borderColor = `color-mix(in srgb, ${color} 40%, transparent)`;
+        div.innerHTML = `<i class="bi ${icon}"></i> ${label} · ${state} (${score})`;
         cont.appendChild(div);
       }
     }
 
-    function renderForecast(){
+    // === Pronóstico de 10 días ===
+    function renderForecast(predicciones = []){
       const box = document.getElementById('forecast');
       box.innerHTML = '';
-      const names=['Today','Mon','Tue','Wed','Thu','Fri','Sat','Sun','Mon+','Tue+'];
-      const base = rows.length ? scoreFrom(rows[rows.length-1]) : 40;
+      const days = ['Today','Mon','Tue','Wed','Thu','Fri','Sat','Sun','Mon+','Tue+'];
       for(let i=0;i<10;i++){
-        const s = Math.max(0, Math.min(100, base + (i-3)*2));
-        const c = classifyScore(s);
-        const line = document.createElement('div');
-        line.className = 'day';
-        line.innerHTML = `<strong>${names[i]}</strong><span class="tag" style="border-color:${c.color}">${c.label} · ${Math.round(s)}</span>`;
-        box.appendChild(line);
+        const score = predicciones[i] ?? Math.floor(40 + Math.random()*60);
+        const c = classifyScore(score);
+        const div = document.createElement('div');
+        div.className = 'day';
+        div.innerHTML = `<strong>${days[i]}</strong><span class="tag" style="border-color:${c.color}">${c.label} · ${score}</span>`;
+        box.appendChild(div);
       }
     }
 
+    // === Inicializar mapa ===
     function initMap(){
-      map = L.map('map');
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18, attribution:'&copy; OpenStreetMap'}).addTo(map);
-      map.setView([25.438,-100.99],12);
+      const map = L.map('map').setView([25.438,-100.99],12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
+      const heat = L.heatLayer([[25.438,-100.99,0.6],[25.44,-100.98,0.4]],{radius:25,blur:20}).addTo(map);
     }
 
     function renderPollution(){
@@ -381,6 +380,17 @@
 2025-10-04 06:30:00+00:00,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
       Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
     });
+
+    // === Inicialización Demo ===
+    document.addEventListener('DOMContentLoaded',()=>{
+      renderHourStrip();   // Horas
+      renderForecast();    // Días
+      initMap();           // Mapa
+    });
+
+    // Cuando tengas tu modelo predictivo:
+    // renderHourStrip([55,60,70,75,80,78,72,65,58,50]);
+    // renderForecast([62,68,74,70,66,60,58,55,52,48]);
   </script>
 </body>
 </html>
