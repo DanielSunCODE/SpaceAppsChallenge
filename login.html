@@ -3,27 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TEMPO AIR – Panel</title>
-
+  <title>TEMPO AIR – Panel (Figma Match)</title>
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
-
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
   <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Heatmap plugin -->
+  <!-- Heatmap plugin (opcional) -->
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
   <style>
     :root{
       --bg:#0b1220; --text:#e9f0ff; --muted:#93a4c2; --card:#0e1525;
@@ -31,8 +25,9 @@
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text)}
-    a{color:inherit; text-decoration:none}
+    a{color:inherit}
 
+    /* Header transparente sobre banner */
     header{
       position:fixed; inset:0 auto auto 0; height:64px; z-index:20;
       display:flex; align-items:center; width:100%;
@@ -47,6 +42,7 @@
     .nav-btn:hover{border-color:rgba(255,255,255,.35)}
     .icon-btn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
 
+    /* Banner superior */
     .banner{position:relative; height:52vh; min-height:360px; width:100%; overflow:hidden}
     .banner img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
     .banner .overlay{position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(11,18,32,1) 80%)}
@@ -54,6 +50,7 @@
     .title h1{margin:0; font-size:clamp(28px,4.5vw,48px)}
     .title p{margin:6px 0 0; color:var(--muted)}
 
+    /* Tira por hora (full width) */
     .hour-strip{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08)}
     .hour-content{max-width:1200px; margin:0 auto; padding:14px 20px; display:grid; grid-template-columns: 120px 1fr; gap:16px; align-items:center}
     .hour-label{font-weight:800; color:#cfe3ff}
@@ -61,6 +58,7 @@
     .chip{display:flex; align-items:center; gap:6px; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:#0e1525; white-space:nowrap; font-weight:700; font-size:12px}
     .chip .bi{font-size:14px}
 
+    /* Predicción + Mapa */
     .section{max-width:1200px; margin:18px auto; padding:0 20px}
     .grid{display:grid; grid-template-columns: 1fr 3fr; gap:16px}
     .card{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px}
@@ -73,21 +71,19 @@
 
     #map{height:360px; border-radius:12px}
 
+    /* Alertas */
     .alerts{max-width:1200px; margin:18px auto; padding:0 20px}
     .alert-panel{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px}
     .alert-panel p{margin:8px 0; color:#cfe3ff}
 
+    /* Botón Estadísticas */
     .center{display:flex; justify-content:center;}
-    .btn-primary{display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:14px; border:1px solid rgba(255,255,255,.18); background:linear-gradient(180deg, rgba(111,177,255,.35), rgba(111,177,255,.15)); font-weight:800; text-decoration:none; color:var(--text)}
-    .btn-primary:hover{background:linear-gradient(180deg, rgba(111,177,255,.45), rgba(111,177,255,.25));}
+    .btn-primary{display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:14px; border:1px solid rgba(255,255,255,.18); background:linear-gradient(180deg, rgba(111,177,255,.35), rgba(111,177,255,.15)); font-weight:800; text-decoration:none}
 
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50;}
-    .modal .box{background:#0e1525; border:1px solid rgba(255,255,255,.12); border-radius:16px; width:min(420px,92vw); padding:16px; animation:fadeIn .3s;}
+    /* Modal usuario */
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50}
+    .modal .box{background:#0e1525; border:1px solid rgba(255,255,255,.12); border-radius:16px; width:min(480px,92vw); padding:16px}
     .modal h3{margin:0 0 12px}
-    .input{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0b1220;color:var(--text);}
-    .input:focus{outline:none;border-color:var(--brand);}
-    .msg{margin-top:6px;font-size:13px;min-height:18px;}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
 
     @media (max-width:980px){
       .hour-content{grid-template-columns:1fr}
@@ -96,7 +92,6 @@
     }
   </style>
 </head>
-
 <body>
   <!-- Header -->
   <header>
@@ -107,6 +102,7 @@
           <a class="nav-btn" href="#explorar">Explorar mapa</a>
           <a class="nav-btn" href="#" id="btnLogin">Login</a>
           <a class="nav-btn" href="#" id="btnSignin">Sign In</a>
+          <button class="icon-btn" id="btnUser" title="Usuario"><i class="bi bi-person"></i></button>
         </nav>
       </div>
     </div>
@@ -122,11 +118,13 @@
     </div>
   </section>
 
-  <!-- Hora -->
+  <!-- Tira por hora (Regular / Good / Bad con iconos) -->
   <section class="hour-strip">
     <div class="hour-content">
       <div class="hour-label">Estadísticas</div>
-      <div class="chips" id="hourChips"></div>
+      <div class="chips" id="hourChips">
+        <!-- chips se llenan desde JS con (hora · estado · icono) -->
+      </div>
     </div>
   </section>
 
@@ -137,6 +135,7 @@
         <h3>10-DAY FORECAST</h3>
         <div class="forecast-list" id="forecast"></div>
       </div>
+
       <div class="card">
         <h3>Mapa de contaminación – Saltillo</h3>
         <div id="map"></div>
@@ -149,35 +148,49 @@
     <div class="alert-panel">
       <h3>ALERTAS</h3>
       <p><strong>El aire está limpio hoy.</strong></p>
-      <p>Los principales componentes del aire están en niveles normales.</p>
+      <p>Esto significa que los principales componentes del aire, como el oxígeno, dióxido de carbono y otras partículas, están en niveles normales.</p>
       <div id="alerts"></div>
     </div>
   </section>
 
-  <!-- Botón Power BI -->
+  <!-- Botón Estadísticas (Power BI) -->
   <section class="section center">
     <a class="btn-primary" id="btnPowerBI" href="#" target="_blank" rel="noopener">
-      <i class="bi bi-graph-up"></i> Estadísticas
+      <i class="bi bi-graph-up"></i>
+      Estadísticas
     </a>
   </section>
 
-  <!-- Script principal -->
+  <!-- Modal Usuario -->
+  <div class="modal" id="userModal">
+    <div class="box">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <h3><i class="bi bi-person"></i> Perfil</h3>
+        <button class="icon-btn" id="closeUserModal" title="Cerrar"><i class="bi bi-x"></i></button>
+      </div>
+      <p style="color:var(--muted)">Aquí aparecerán opciones de cuenta (iniciar sesión, cerrar sesión, ajustes). Integramos la autenticación cuando esté lista.</p>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="nav-btn" onclick="alert('Login próximamente');">Login</button>
+        <button class="nav-btn" onclick="alert('Registro próximamente');">Sign In</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // ===== Estado =====
+    // ====== Estado ======
     let rows = [];
     let map, heat, markers = [];
-    const usersDB = [{ email: "test@tempoair.com", password: "1234", name: "Daniel Sun" }];
 
-    // ===== Utilidades =====
+    // ====== Utilidades ======
     function classifyScore(score){
       if(score < 35) return {label:'Good', color:'var(--good)', icon:'bi-heart-fill'};
       if(score > 65) return {label:'Bad', color:'var(--bad)', icon:'bi-exclamation-triangle-fill'};
       return {label:'Regular', color:'var(--regular)', icon:'bi-shield-check'};
     }
-
     function fmt(n,d=2){return (n==null||isNaN(n))?'—':Number(n).toFixed(d)}
 
     function scoreFrom(r){
+      // mismo esquema simple del prototipo anterior
       const z = (
         (r.no2/100)*25 + (Math.max(0,r.o3)/120)*20 + (r.hcho/0.002)*15 + (r.so2/0.002)*15 + (r.co/2.0)*25
       )*100;
@@ -196,11 +209,12 @@
       return {time, lat, lon, no2, o3, hcho, so2, co};
     }
 
-    // ===== Render =====
+    // ====== Banner Hourly Line ======
     function renderHourStrip(){
       const cont = document.getElementById('hourChips');
       cont.innerHTML = '';
-      const last = rows.slice(-64);
+      // Tomamos 16 horas más recientes
+      const last = rows.slice(-64); // 15min * 64 = 16h
       const byHour = new Map();
       for(const r of last){
         const k = r.time.toISOString().slice(0,13);
@@ -221,9 +235,11 @@
       }
     }
 
+    // ====== Forecast (1/4 izquierda) ======
     function renderForecast(){
       const box = document.getElementById('forecast');
       box.innerHTML = '';
+      // naive 10 días – reemplazar con applyForecast() cuando tengas el modelo
       const names=['Today','Mon','Tue','Wed','Thu','Fri','Sat','Sun','Mon+','Tue+'];
       const base = rows.length ? scoreFrom(rows[rows.length-1]) : 40;
       for(let i=0;i<10;i++){
@@ -231,147 +247,101 @@
         const c = classifyScore(s);
         const line = document.createElement('div');
         line.className = 'day';
-        line.innerHTML = `<strong>${names[i]}</strong><span class="tag" style="border-color:${c.color}">${c.label} · ${Math.round(s)}</span>`;
+        line.innerHTML = `<strong>${names[i]||('Day '+(i+1))}</strong><span class="tag" style="border-color:${c.color}">${c.label} · ${Math.round(s)}</span>`;
         box.appendChild(line);
       }
     }
 
-    function initMap(){
-      map = L.map('map');
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18, attribution:'&copy; OpenStreetMap'}).addTo(map);
-      map.setView([25.438,-100.99],12);
-    }
-
-    function renderPollution(){
-      markers.forEach(m=>map.removeLayer(m)); markers=[];
-      if(heat){map.removeLayer(heat);heat=null;}
-      const pts = rows.slice(-200).filter(r=>r.lat&&r.lon).map(r=>({lat:r.lat, lon:r.lon, s:scoreFrom(r)}));
-      if(window.L && L.heatLayer && pts.length){
-        const heatData = pts.map(p=>[p.lat,p.lon,Math.max(0.2,p.s/100)]);
-        heat = L.heatLayer(heatData,{radius:22,blur:18,maxZoom:12,minOpacity:.3}).addTo(map);
+    // API pública para tu modelo
+    window.applyForecast = function(pred){
+      const box = document.getElementById('forecast');
+      box.innerHTML = '';
+      for(const d of pred){
+        const c = classifyScore(d.score);
+        const line = document.createElement('div');
+        line.className='day';
+        line.innerHTML = `<strong>${d.name}</strong><span class="tag" style="border-color:${c.color}">${d.label||c.label} · ${Math.round(d.score)}</span>`;
+        box.appendChild(line);
       }
     }
 
+    // ====== Mapa (3/4 derecha) ======
+    function initMap(){
+      map = L.map('map');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution:'&copy; OpenStreetMap'}).addTo(map);
+      map.setView([25.438, -100.99], 12);
+    }
+
+    function renderPollution(){
+      // limpia
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+      if (heat){ map.removeLayer(heat); heat = null; }
+      // Crea puntos ponderados por score
+      const pts = rows.slice(-200).filter(r=>r.lat&&r.lon).map(r=>({lat:r.lat, lon:r.lon, s:scoreFrom(r)}));
+      if(window.L && L.heatLayer && pts.length){
+        const heatData = pts.map(p=>[p.lat, p.lon, Math.max(0.2, p.s/100)]);
+        heat = L.heatLayer(heatData, {radius: 22, blur: 18, maxZoom: 12, minOpacity:.3}).addTo(map);
+      } else {
+        // fallback con círculos
+        for(const p of pts){
+          const c = classifyScore(p.s);
+          const circle = L.circleMarker([p.lat,p.lon], {radius:6, weight:1, color:'#000', fillColor:getComputedStyle(document.documentElement).getPropertyValue(c.color) || '#fff', fillOpacity:.8});
+          circle.addTo(map).bindTooltip(`${Math.round(p.s)} – ${c.label}`);
+          markers.push(circle);
+        }
+      }
+    }
+
+    // ====== CSV ingest ======
     async function loadCSVFromInput(file){
       return new Promise((resolve,reject)=>{
-        Papa.parse(file,{header:true,dynamicTyping:true,skipEmptyLines:true,complete:res=>resolve(res.data),error:reject});
+        Papa.parse(file,{header:true,dynamicTyping:true,skipEmptyLines:true,complete:res=>resolve(res.data), error:reject});
       });
     }
 
     function ingest(data){
       rows = data.map(normalizeRow).filter(r=>r.time && !Number.isNaN(r.co)).sort((a,b)=>a.time-b.time);
-      if(!rows.length){alert('CSV sin filas válidas');return;}
-      renderHourStrip();renderForecast();renderPollution();
+      if(!rows.length){ alert('CSV sin filas válidas'); return; }
+      renderHourStrip();
+      renderForecast();
+      renderPollution();
     }
 
+    // ====== Interacciones ======
+    // Arrastrar CSV a cualquier parte
     document.addEventListener('dragover', e=>e.preventDefault());
-    document.addEventListener('drop', async e=>{
+    document.addEventListener('drop', async (e)=>{
       e.preventDefault();
       const file = e.dataTransfer.files?.[0];
-      if(!file)return;
+      if(!file) return;
       const data = await loadCSVFromInput(file);
       ingest(data);
     });
 
-    // ===== Login & Registro =====
-    const loginModal = createModal('Login', `
-      <p style="color:var(--muted)">Ingresa tu correo y contraseña para acceder.</p>
-      <input id="loginEmail" type="email" placeholder="Correo" class="input" />
-      <input id="loginPass" type="password" placeholder="Contraseña" class="input" />
-      <button class="btn-primary" style="margin-top:8px" id="doLogin"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
-      <p id="loginMsg" class="msg"></p>
-      <p style="margin-top:8px;font-size:13px;">¿No tienes cuenta? <a href="#" id="goSignup">Regístrate</a></p>
-    `);
+    // Modal usuario
+    const userModal = document.getElementById('userModal');
+    document.getElementById('btnUser').addEventListener('click', ()=>{ userModal.style.display='flex'; });
+    document.getElementById('closeUserModal').addEventListener('click', ()=>{ userModal.style.display='none'; });
+    userModal.addEventListener('click', (e)=>{ if(e.target===userModal) userModal.style.display='none'; });
 
-    const signupModal = createModal('Registro', `
-      <p style="color:var(--muted)">Crea una nueva cuenta para personalizar tus alertas.</p>
-      <input id="signupName" type="text" placeholder="Nombre" class="input" />
-      <input id="signupEmail" type="email" placeholder="Correo" class="input" />
-      <input id="signupPass" type="password" placeholder="Contraseña" class="input" />
-      <button class="btn-primary" style="margin-top:8px" id="doSignup"><i class="bi bi-person-plus"></i> Registrarme</button>
-      <p id="signupMsg" class="msg"></p>
-      <p style="margin-top:8px;font-size:13px;">¿Ya tienes cuenta? <a href="#" id="goLogin">Inicia sesión</a></p>
-    `);
+    // Power BI – ajusta la URL real aquí
+    document.getElementById('btnPowerBI').addEventListener('click', (e)=>{
+      const url = 'https://app.powerbi.com/'; // TODO: reemplazar por tu enlace de reporte
+      e.currentTarget.href = url;
+    });
 
-    function createModal(title, contentHTML){
-      const modal = document.createElement('div');
-      modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="box">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h3><i class="bi bi-person-circle"></i> ${title}</h3>
-            <button class="icon-btn closeBtn"><i class="bi bi-x"></i></button>
-          </div>
-          <div class="content">${contentHTML}</div>
-        </div>`;
-      document.body.appendChild(modal);
-      modal.querySelector('.closeBtn').onclick = ()=>modal.style.display='none';
-      modal.onclick = e=>{if(e.target===modal)modal.style.display='none';};
-      return modal;
-    }
-
-    document.getElementById('btnLogin').onclick = ()=> loginModal.style.display='flex';
-    document.getElementById('btnSignin').onclick = ()=> signupModal.style.display='flex';
-
-    loginModal.querySelector('#goSignup').onclick = ()=>{
-      loginModal.style.display='none';
-      signupModal.style.display='flex';
-    };
-    signupModal.querySelector('#goLogin').onclick = ()=>{
-      signupModal.style.display='none';
-      loginModal.style.display='flex';
-    };
-
-    loginModal.querySelector('#doLogin').onclick = ()=>{
-      const email = loginModal.querySelector('#loginEmail').value.trim();
-      const pass = loginModal.querySelector('#loginPass').value.trim();
-      const msg = loginModal.querySelector('#loginMsg');
-      const user = usersDB.find(u=>u.email===email && u.password===pass);
-      if(user){
-        msg.textContent = `Bienvenido, ${user.name}!`;
-        msg.style.color = 'var(--good)';
-        setTimeout(()=>loginModal.style.display='none',1000);
-      } else {
-        msg.textContent = "Usuario no encontrado. Redirigiendo a registro...";
-        msg.style.color = 'var(--bad)';
-        setTimeout(()=>{
-          loginModal.style.display='none';
-          signupModal.style.display='flex';
-        },1000);
-      }
-    };
-
-    signupModal.querySelector('#doSignup').onclick = ()=>{
-      const name = signupModal.querySelector('#signupName').value.trim();
-      const email = signupModal.querySelector('#signupEmail').value.trim();
-      const pass = signupModal.querySelector('#signupPass').value.trim();
-      const msg = signupModal.querySelector('#signupMsg');
-      if(!name || !email || !pass){
-        msg.textContent = "Completa todos los campos.";
-        msg.style.color = 'var(--bad)';
-        return;
-      }
-      if(usersDB.some(u=>u.email===email)){
-        msg.textContent = "Ya existe una cuenta con ese correo.";
-        msg.style.color = 'var(--regular)';
-        return;
-      }
-      usersDB.push({name,email,password:pass});
-      msg.textContent = "Cuenta creada. ¡Inicia sesión!";
-      msg.style.color = 'var(--good)';
-      setTimeout(()=>{
-        signupModal.style.display='none';
-        loginModal.style.display='flex';
-      },1000);
-    };
-
-    // ===== Boot =====
+    // Boot
     window.addEventListener('DOMContentLoaded', ()=>{
       initMap();
-      const sample = `datetime,latitude,longitude,no2,o3,hcho,so2,co
-2025-10-04 06:00:00+00:00,25.43932,-100.98761,48.70,-37.15,0.000248,0.000156,0.013653
-2025-10-04 06:15:00+00:00,25.43695,-100.99498,44.15,-37.66,0.000112,0.000190,0.032190
-2025-10-04 06:30:00+00:00,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
+      // Carga de muestra rápida (opcional):
+      const sample = `datetime,date_only,zone,latitude,longitude,no2_value,o3_value,hcho_value,so2_value,co_value
+`
+        + `2025-10-04 06:00:00+00:00,2025-10-04,Centro,25.43932,-100.98761,48.70,-37.15,0.000248,0.000156,0.013653
+`
+        + `2025-10-04 06:15:00+00:00,2025-10-04,Centro,25.43695,-100.99498,44.15,-37.66,0.000112,0.000190,0.032190
+`
+        + `2025-10-04 06:30:00+00:00,2025-10-04,Centro,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
       Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
     });
   </script>
