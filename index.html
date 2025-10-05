@@ -29,7 +29,7 @@
       --bg:#0b1220;--text:#e9f0ff;--muted:#93a4c2;--card:#0e1525;
       --good:#2ecc71;--regular:#f1c40f;--bad:#e74c3c;--brand:#6fb1ff;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box; scroll-margin: 4rem;}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
     a{color:inherit;text-decoration:none}
     html{scroll-behavior:smooth;}
@@ -48,14 +48,39 @@
     .nav-btn:hover{border-color:rgba(255,255,255,.35)}
     .icon-btn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
 
-    .banner{position:relative;height:52vh;min-height:360px;width:100%;overflow:hidden;text-align:center}
-    .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .banner .overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(11,18,32,1) 80%)}
-    .title{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:min(1200px,92vw);padding:0 20px}
+    /* --- Banner ocupa toda la pantalla --- */
+    .banner {
+      position: relative;
+      height: 100vh; /* ahora ocupa toda la altura visible */
+      width: 100%;
+      overflow: hidden;
+      text-align: center;
+    }
+    .banner img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .banner .overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(11,18,32,1) 90%);
+    }
+    .title {
+      position: absolute;
+      bottom: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1200px, 92vw);
+      padding: 0 20px;
+      color: var(--text);
+    }
     .title h1{margin:0;font-size:clamp(28px,4.5vw,48px)}
-    .title p{margin:6px 0 16px;color:var(--muted)}
+    .title p{margin:10px 0 16px;color:var(--muted)}
     .explore-btn{display:inline-block;background:#d9d9d9;color:#000;font-weight:600;font-size:16px;
-      padding:12px 32px;border-radius:999px;text-decoration:none;transition:all 0.3s ease;}
+      padding:12px 32px;margin-top: 12px;;border-radius:999px;text-decoration:none;transition:all 0.3s ease;}
     .explore-btn:hover{background:#fff;transform:translateY(-3px)}
 
     .hour-strip{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
@@ -72,7 +97,7 @@
     .card{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px}
     .card h3{margin:0 0 10px; font-size:16px; color:#cfe3ff}
 
-    .forecast-list{display:grid; gap:10px}
+    .forecast-list{display:grid; gap:10px; overflow: hidden !important}
     .day{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:12px; background:#0e1525; border:1px solid rgba(255,255,255,.06)}
     .day strong{letter-spacing:.2px}
     .tag{font-size:12px; font-weight:800; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16)}
@@ -87,7 +112,7 @@
     .btn-primary{display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:14px; border:1px solid rgba(255,255,255,.18); background:linear-gradient(180deg, rgba(111,177,255,.35), rgba(111,177,255,.15)); font-weight:800; text-decoration:none; color:var(--text)}
     .btn-primary:hover{background:linear-gradient(180deg, rgba(111,177,255,.45), rgba(111,177,255,.25));}
 
-    .modal{z-index: 9999 !important; position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50;}
+    .modal{z-index: 9999 !important; position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center;}
     .modal .box{background:#0e1525; border:1px solid rgba(255,255,255,.12); border-radius:16px; width:min(420px,92vw); padding:16px; animation:fadeIn .3s;}
     .leaflet-pane,
     .leaflet-top,
@@ -100,6 +125,72 @@
     .input{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0b1220;color:var(--text);}
     .input:focus{outline:none;border-color:var(--brand);}
     .msg{margin-top:6px;font-size:13px;min-height:18px;}
+    
+    /* --- Air Summary sin fondo, integrado en el BG --- */
+    .air-summary {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent; /* sin fondo gris */
+      padding: 20px;
+      text-align: center;
+    }
+
+    .air-box {
+      background: none; /* quita fondo */
+      border: none; /* sin bordes */
+      border-radius: 16px;
+      padding: 0 20px 30px;
+      max-width: 340px;
+      width: 100%;
+    }
+
+    .air-box .location {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .air-box .status {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 0;
+      color: var(--regular);
+      letter-spacing: 1px;
+    }
+
+    .air-box .aqi-text {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+      margin-bottom: 16px;
+    }
+
+    .aqi-bar {
+      position: relative;
+      height: 10px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .gradient-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, var(--good), var(--regular), var(--bad));
+      border-radius: 6px;
+    }
+
+    .indicator {
+      position: absolute;
+      top: -3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--bg);
+      transform: translateX(-50%);
+    }
+
     @keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
 
     @media (max-width:980px){
@@ -135,6 +226,20 @@
       <a href="#explorar" class="explore-btn">Explorar Mapa</a>
     </div>
   </section>
+
+  <!-- Air Quality Summary -->
+<section class="air-summary">
+  <div class="air-box">
+    <p class="location"><i class="bi bi-geo-alt-fill"></i> Saltillo, Coahuila</p>
+    <h2 class="status">REGULAR</h2>
+    <p class="aqi-text">Air Quality 67</p>
+    <div class="aqi-bar">
+      <div class="gradient-bar"></div>
+      <div class="indicator" style="left: 67%;"></div>
+    </div>
+  </div>
+</section>
+
 
   <!-- Hour Forecast -->
   <section class="hour-strip">
@@ -382,8 +487,8 @@
 2025-10-04 06:30:00+00:00,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
       Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
     });
-  </script>
-  <script>
+
+
   // --- Cargar el mapa base ---
 map.setView([25.438, -100.979], 12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
