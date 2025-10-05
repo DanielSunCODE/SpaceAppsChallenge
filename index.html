@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TEMPO AIR – Panel</title>
 
-  
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,9 +40,11 @@
       padding:0 24px;background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.00));
       backdrop-filter:blur(6px);
     }
-    .logo{font-weight:800;letter-spacing:.5px}
-    .nav-btn{font-weight:700;font-size:14px;padding:8px 12px;border-radius:12px;text-decoration:none;
-      border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);margin-left:8px}
+    .wrap{max-width:1200px; margin:0 auto; padding:0 20px; width:100%}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:16px}
+    .logo{font-weight:800; letter-spacing:.5px}
+    nav{display:flex; gap:10px; align-items:center}
+    .nav-btn{font-weight:700; font-size:14px; padding:8px 12px; border-radius:12px; text-decoration:none; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
     .nav-btn:hover{border-color:rgba(255,255,255,.35)}
     .icon-btn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06)}
 
@@ -116,8 +117,8 @@
       <div class="row">
         <div class="logo">TEMPO AIR</div>
         <nav>
-          <a class="nav-btn" href="#explorar">Explore Map</a>
-          <a class="nav-btn" href="#" id="btnLogin">Login</a>
+          <a class="nav-btn" href="#explorar">Explorar mapa</a>
+          <a class="nav-btn" href="#" id="btnLogin">Log In</a>
           <a class="nav-btn" href="#" id="btnSignin">Sign In</a>
         </nav>
       </div>
@@ -130,7 +131,8 @@
     <div class="overlay"></div>
     <div class="title">
       <h1>TEMPO AIR</h1>
-      <p>Monitor air quality with TEMPO satellite data and receive personalized alerts to take care of your health and that of your family.</p>
+      <p>Monitorea la calidad del aire con datos satelitales TEMPO y recibe alertas personalizadas para cuidar tu salud y la de tu familia.</p>
+      <a href="#explorar" class="explore-btn">Explorar Mapa</a>
     </div>
   </section>
 
@@ -150,7 +152,7 @@
         <div class="forecast-list" id="forecast"></div>
       </div>
       <div class="card">
-        <h3>Air Pollution Map Analysis</h3>
+        <h3>Mapa de contaminación – Saltillo</h3>
         <div id="map"></div>
       </div>
     </div>
@@ -161,7 +163,7 @@
     <div class="alert-panel">
       <h3>ALERTAS</h3>
       <p><strong>El aire está limpio hoy.</strong></p>
-      <p>The main components of the air are at normal levels.</p>
+      <p>Los principales componentes del aire están en niveles normales.</p>
       <div id="alerts"></div>
     </div>
   </section>
@@ -169,7 +171,7 @@
   <!-- Botón Power BI -->
   <section class="section center">
     <a class="btn-primary" id="btnPowerBI" href="#" target="_blank" rel="noopener">
-      <i class="bi bi-graph-up"></i> Statistics
+      <i class="bi bi-graph-up"></i> Estadísticas
     </a>
   </section>
 
@@ -380,17 +382,6 @@
 2025-10-04 06:30:00+00:00,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
       Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
     });
-
-    // === Inicialización Demo ===
-    document.addEventListener('DOMContentLoaded',()=>{
-      renderHourStrip();   // Horas
-      renderForecast();    // Días
-      initMap();           // Mapa
-    });
-
-    // Cuando tengas tu modelo predictivo:
-    // renderHourStrip([55,60,70,75,80,78,72,65,58,50]);
-    // renderForecast([62,68,74,70,66,60,58,55,52,48]);
   </script>
 </body>
 </html>
