@@ -11,10 +11,9 @@ import serial, json, threading, os, time
 # ------------------------------------------------
 # CONFIGURACIÓN DEL PUERTO SERIAL
 # ------------------------------------------------
-# ⚠️ En Windows usa COMx (ej: "COM6")
-# ⚠️ En macOS/Linux usa /dev/tty.usbmodemXXXX o /dev/ttyACM0
-SERIAL_PORT = os.getenv("ARD_PORT", "COM6")
+SERIAL_PORT = os.getenv("ARD_PORT", "COM4")  # ⚠️ Cambiar COM6 si usas otro
 BAUD = 9600
+LOG_FILE = "sensor_log.txt"  # Archivo donde se guardan las lecturas
 
 # ------------------------------------------------
 # INICIALIZACIÓN DE LA API
@@ -22,26 +21,14 @@ BAUD = 9600
 app = FastAPI(title="Arduino MQ135 Live Data")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite conexión desde el frontend
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Valor actual leído del Arduino
-current_data = {"quality": 0, "status": "Desconocido", "updated": False}
-
-
-# ------------------------------------------------
-# FUNCIÓN PARA CONVERTIR LECTURA A ESCALA 0–100
-# ------------------------------------------------
-def sensor_to_quality(co2_ppm: float) -> float:
-    """
-    Convierte CO2 (ppm) en un índice 0–100 aproximado.
-    Cuanto menor sea el CO2, mejor la calidad del aire.
-    """
-    q = (2000.0 - co2_ppm) / (2000.0 - 350.0) * 100.0
-    return max(0.0, min(100.0, q))
+current_data = {"value": 0, "status": "Desconocido", "updated": False}
 
 
 # ------------------------------------------------
@@ -52,7 +39,7 @@ def serial_reader():
     print(f"Conectando al puerto {SERIAL_PORT}...")
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD, timeout=1)
-        time.sleep(2)  # Esperar a que el Arduino se estabilice
+        time.sleep(2)
         print("✅ Conectado correctamente al Arduino.")
     except Exception as e:
         print(f"❌ No se pudo conectar al Arduino ({e})")
@@ -69,22 +56,32 @@ def serial_reader():
                 continue
 
             data = json.loads(line)
-            co2 = float(data.get("CO2", 0.0))
-            q = round(sensor_to_quality(co2), 1)
-            status = "Bueno" if q >= 65 else ("Regular" if q >= 40 else "Malo")
+            sensor_val = int(float(data.get("CO2", 0.0)))
+
+            if sensor_val <= 720:
+                status = "Bueno"
+            elif sensor_val <= 1137:
+                status = "Regular"
+            else:
+                status = "Malo"
 
             current_data = {
-                "quality": q,
+                "value": sensor_val,
                 "status": status,
                 "updated": True
             }
 
-            print(f"📡 {time.strftime('%H:%M:%S')} -> Calidad: {q} ({status})")
+            log_line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} -> Valor: {sensor_val} | Estado: {status}\n"
+
+            # Guardar en el archivo
+            with open("sensor_log.txt", "a") as f:
+                f.write(log_line)
+
+            print(f"📡 {log_line.strip()}")
 
         except Exception as e:
-            # Si el puerto lanza error o el JSON llega incompleto, se ignora
-            # print(f"Error lectura: {e}")
             continue
+
 
 
 # Lanzar el hilo de lectura en segundo plano
@@ -100,8 +97,8 @@ def get_live_data():
     Devuelve la última lectura del sensor MQ135.
     Ejemplo:
     {
-        "quality": 72.5,
-        "status": "Bueno",
+        "value": 450,
+        "status": "Regular",
         "updated": true
     }
     """
