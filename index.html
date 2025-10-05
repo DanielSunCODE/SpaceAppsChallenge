@@ -22,7 +22,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Heatmap plugin -->
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <!-- <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script> -->
 
   <style>
     :root{
@@ -536,6 +536,7 @@
 2025-10-04 06:15:00+00:00,25.43695,-100.99498,44.15,-37.66,0.000112,0.000190,0.032190
 2025-10-04 06:30:00+00:00,25.44460,-100.98054,44.04,-29.05,0.000010,0.000197,0.025429`;
       Papa.parse(sample,{header:true,dynamicTyping:true,complete:r=>ingest(r.data)});
+        loadAirJson(); // ← carga marcadores desde public/data/air_quality_data.json
     });
   </script>
   <script>
