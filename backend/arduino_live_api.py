@@ -11,7 +11,7 @@ import serial, json, threading, os, time
 # ------------------------------------------------
 # CONFIGURACIÓN DEL PUERTO SERIAL
 # ------------------------------------------------
-SERIAL_PORT = os.getenv("ARD_PORT", "COM4")  # ⚠️ Cambiar COM6 si usas otro
+SERIAL_PORT = os.getenv("ARD_PORT", "COM4")  # ⚠️ Cambiar COMx según el puerto real
 BAUD = 9600
 LOG_FILE = "sensor_log.txt"  # Archivo donde se guardan las lecturas
 
@@ -58,12 +58,13 @@ def serial_reader():
             data = json.loads(line)
             sensor_val = int(float(data.get("CO2", 0.0)))
 
+            # Determinar el estado según los rangos definidos
             if sensor_val <= 720:
-                status = "Bueno"
+                status = "Good"
             elif sensor_val <= 1137:
                 status = "Regular"
             else:
-                status = "Malo"
+                status = "Poor"
 
             current_data = {
                 "value": sensor_val,
@@ -74,14 +75,13 @@ def serial_reader():
             log_line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} -> Valor: {sensor_val} | Estado: {status}\n"
 
             # Guardar en el archivo
-            with open("sensor_log.txt", "a") as f:
+            with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(log_line)
 
             print(f"📡 {log_line.strip()}")
 
-        except Exception as e:
+        except Exception:
             continue
-
 
 
 # Lanzar el hilo de lectura en segundo plano
@@ -89,7 +89,7 @@ threading.Thread(target=serial_reader, daemon=True).start()
 
 
 # ------------------------------------------------
-# ENDPOINT PARA OBTENER EL DATO ACTUAL
+# ENDPOINT PARA OBTENER EL DATO ACTUAL EN TIEMPO REAL
 # ------------------------------------------------
 @app.get("/live")
 def get_live_data():
@@ -106,12 +106,51 @@ def get_live_data():
 
 
 # ------------------------------------------------
+# ENDPOINT PARA LEER EL ÚLTIMO REGISTRO DEL LOG
+# ------------------------------------------------
+@app.get("/last_log")
+def get_last_log():
+    """
+    Devuelve el último registro del archivo sensor_log.txt
+    Ejemplo de salida:
+    {
+      "valor": 67.5,
+      "estado": "Regular"
+    }
+    """
+    try:
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            if not lines:
+                return {"valor": 0, "estado": "Desconocido"}
+            last = lines[-1].strip()
+
+            # Ejemplo de línea: "2025-10-05 10:45:32 -> Valor: 450 | Estado: Regular"
+            parts = last.split("|")
+            valor = 0
+            estado = "Desconocido"
+            for p in parts:
+                p = p.strip()
+                if "Valor:" in p:
+                    try:
+                        valor = float(p.split(":")[1].strip())
+                    except:
+                        valor = 0
+                elif "Estado:" in p:
+                    estado = p.split(":")[1].strip()
+
+            return {"valor": valor, "estado": estado}
+    except FileNotFoundError:
+        return {"valor": 0, "estado": "Sin datos"}
+
+
+# ------------------------------------------------
 # ENDPOINT DE PRUEBA
 # ------------------------------------------------
 @app.get("/")
 def root():
     return {
         "message": "API en tiempo real del sensor MQ135 activa",
-        "endpoint": "/live",
+        "endpoints": ["/live", "/last_log"],
         "author": "Ángel Alejandro Morales Aguilar"
     }
